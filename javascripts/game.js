@@ -34,8 +34,12 @@ export function Start(container) {
     // run the renderer
     Render.run(render);
     window.addEventListener('deviceorientation', event => {
-        engine.world.gravity.x = event.beta / 180;
-        engine.world.gravity.y = event.gamma / 180; 
+        const x = event.beta;
+        const y = event.gamma;
+        if (x >  90) { x =  90};
+        if (x < -90) { x = -90};
+        engine.world.gravity.x = x / 90;
+        engine.world.gravity.y = y / 90; 
     });
 
 
