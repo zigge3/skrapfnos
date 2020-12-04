@@ -38,8 +38,8 @@ export function Start(container) {
         const y = event.gamma;
         if (x >  90) { x =  90};
         if (x < -90) { x = -90};
-        engine.world.gravity.x = x / 90;
-        engine.world.gravity.y = y / 90; 
+        engine.world.gravity.x = y / 90;
+        engine.world.gravity.y = x / 90; 
     });
 
 
