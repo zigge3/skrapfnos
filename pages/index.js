@@ -20,7 +20,24 @@ export default function Home() {
       )}
       {!appStarted && (
         <div className={styles.container}>
-          <button onClick={() => setAppStarted(true)}>Starta</button>
+          <button
+            onClick={() => {
+              if (
+                typeof DeviceOrientationEvent !== "undefined" &&
+                typeof DeviceOrientationEvent.requestPermission === "function"
+              ) {
+                DeviceOrientationEvent.requestPermission().then(
+                  (permissionState) => {
+                    if (permissionState === "granted") {
+                      setAppStarted(true);
+                    }
+                  }
+                );
+              }
+            }}
+          >
+            Starta
+          </button>
         </div>
       )}
     </div>
