@@ -34,6 +34,7 @@ export function Start(container) {
     // run the renderer
     Render.run(render);
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        alert("asd")
         DeviceOrientationEvent.requestPermission()
         .then(permissionState => {
         if (permissionState === 'granted') {
