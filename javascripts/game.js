@@ -2,6 +2,9 @@ import { Engine, Render, World, Bodies } from "matter-js";
 import { debounce } from "underscore";
 export function Start(container) {
   const { innerHeight, innerWidth } = window;
+  setTimeout(function () {
+    window.scrollTo(0, 1);
+  }, 1000);
   const engine = Engine.create({
     options: {
       width: innerWidth,
@@ -68,16 +71,22 @@ export function Start(container) {
     isDragging = true;
   });
   const lazyDrag = debounce((e) => {
+    e.preventDefault();
     if (isDragging) {
-      spawnFnos({ x: e.clientX, y: e.clientY, color: "white" });
+    } else if (e.type === "touchmove") {
+      spawnFnos({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        color: "white",
+      });
     }
   }, 10);
   container.addEventListener("mousemove", lazyDrag);
+  container.addEventListener("touchmove", lazyDrag);
   container.addEventListener("mouseup", (e) => {
     isDragging = false;
   });
   function spawnFnos({ color, x, y }) {
-    console.log(x, y);
     const fnos = Bodies.rectangle(x, y, 2, 2, {
       color: color,
     });
