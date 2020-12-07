@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "konva": "^7.2.0",
     "matter-js": "^0.14.2",
     "next": "10.0.3",
     "prettier": "^2.2.1",
