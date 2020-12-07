@@ -1,4 +1,5 @@
 import { Engine, Render, World, Bodies } from "matter-js";
+import { debounce } from "underscore";
 export function Start(container) {
   const { innerHeight, innerWidth } = window;
   const engine = Engine.create({
@@ -62,9 +63,18 @@ export function Start(container) {
     engine.world.gravity.x = (y / 90) * 2;
     engine.world.gravity.y = (x / 90) * 2;
   });
-
-  container.addEventListener("click", (e) => {
-    spawnFnos({ x: e.clientX, y: e.clientY, color: "white" });
+  let isDragging = false;
+  container.addEventListener("mousedown", (e) => {
+    isDragging = true;
+  });
+  const lazyDrag = debounce((e) => {
+    if (isDragging) {
+      spawnFnos({ x: e.clientX, y: e.clientY, color: "white" });
+    }
+  }, 10);
+  container.addEventListener("mousemove", lazyDrag);
+  container.addEventListener("mouseup", (e) => {
+    isDragging = false;
   });
   function spawnFnos({ color, x, y }) {
     console.log(x, y);
