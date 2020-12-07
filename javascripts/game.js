@@ -1,7 +1,11 @@
-import { Engine, Render, World, Bodies } from "matter-js";
+import { Engine, Render, World, Bodies, Events } from "matter-js";
+import Matter from "matter-js";
+import MatterAttractors from "matter-attractors";
+Matter.use(MatterAttractors);
 import { debounce } from "underscore";
-export function Start(container) {
+export function Start(container, filter, analyser) {
   const { innerHeight, innerWidth } = window;
+  let counterGrav = 0;
   setTimeout(function () {
     window.scrollTo(0, 1);
   }, 1000);
@@ -19,6 +23,8 @@ export function Start(container) {
     options: {
       width: innerWidth,
       height: innerHeight,
+      wireframes: false,
+      background: "transparent",
     },
   });
 
@@ -33,6 +39,19 @@ export function Start(container) {
     50,
     { isStatic: true }
   );
+  var body = Matter.Bodies.circle(innerWidth / 2, innerHeight + 50, 10, {
+    isStatic: true,
+    plugin: {
+      attractors: [
+        function (bodyA, bodyB) {
+          return {
+            x: counterGrav * ((bodyA.position.x - bodyB.position.x) * 1e-6),
+            y: counterGrav * ((bodyA.position.y - bodyB.position.y) * 1e-6),
+          };
+        },
+      ],
+    },
+  });
   const wall2 = Bodies.rectangle(-25, innerHeight / 2, 50, innerHeight, {
     isStatic: true,
   });
@@ -46,8 +65,19 @@ export function Start(container) {
     innerHeight,
     { isStatic: true }
   );
+
+  Events.on(engine, "afterUpdate", () => {
+    engine.world.bodies.forEach((b) => {
+      if (
+        Math.abs(b.position.y) > innerHeight * 2 ||
+        Math.abs(b.position.x) > innerWidth * 2
+      ) {
+        World.remove(engine.world, b);
+      }
+    });
+  });
   // add all of the bodies to the world
-  World.add(engine.world, [boxA, boxB, wall1, wall2, wall3, wall4]);
+  World.add(engine.world, [body, boxA, boxB, wall1, wall2, wall3, wall4]);
 
   // run the engine
   Engine.run(engine);
@@ -63,9 +93,29 @@ export function Start(container) {
     if (x < -90) {
       x = -90;
     }
-    engine.world.gravity.x = (y / 90) * 2;
-    engine.world.gravity.y = (x / 90) * 2;
+    engine.world.gravity.x = y / 90;
+    engine.world.gravity.y = x / 90;
   });
+
+  filter.onaudioprocess = debounce(function () {
+    var array = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(array);
+    var values = 0;
+
+    var length = array.length;
+    for (var i = 0; i < length; i++) {
+      values += array[i];
+    }
+
+    var average = values / length;
+
+    if (average > 20) {
+      counterGrav = -Math.round(average / 20);
+    } else {
+      counterGrav = 0;
+    }
+  }, 10);
+
   let isDragging = false;
   container.addEventListener("mousedown", (e) => {
     isDragging = true;
@@ -87,7 +137,7 @@ export function Start(container) {
     isDragging = false;
   });
   function spawnFnos({ color, x, y }) {
-    const fnos = Bodies.rectangle(x, y, 2, 2, {
+    const fnos = Bodies.rectangle(x, y, 20, 20, {
       color: color,
     });
     World.add(engine.world, [fnos]);

@@ -6,13 +6,19 @@ import { useEffect, useRef, useState, Fragment } from "react";
 export default function Home() {
   const gameContainer = useRef("");
   const konvaContainer = useRef("");
+  const mediaStream = useRef("");
+  const analyserRef = useRef("");
   const [appStarted, setAppStarted] = useState(false);
   useEffect(() => {
     if (appStarted) {
-      const objs = Start(gameContainer.current);
+      const objs = Start(
+        gameContainer.current,
+        mediaStream.current,
+        analyserRef.current
+      );
       StartKonva(konvaContainer.current);
       return () => {
-        Stop(objs);
+        //Stop(objs);
       };
     }
   }, [appStarted]);
@@ -20,8 +26,8 @@ export default function Home() {
     <div className={styles.main}>
       {appStarted && (
         <Fragment>
-          <div className={styles.container} ref={konvaContainer}></div>
-          <div className={styles.container} ref={gameContainer}></div>
+          <div className={styles.stacked} ref={konvaContainer}></div>
+          <div className={styles.stacked} ref={gameContainer}></div>
         </Fragment>
       )}
       {!appStarted && (
@@ -35,12 +41,48 @@ export default function Home() {
                 DeviceOrientationEvent.requestPermission().then(
                   (permissionState) => {
                     if (permissionState === "granted") {
-                      setAppStarted(true);
+                      navigator.mediaDevices
+                        .getUserMedia({ audio: true })
+                        .then((ms) => {
+                          window.AudioContext =
+                            window.AudioContext || window.webkitAudioContext;
+                          const context = new AudioContext();
+                          const microphone = context.createMediaStreamSource(
+                            ms
+                          );
+                          const filter = context.createBiquadFilter();
+                          // microphone -> filter -> destination
+                          microphone.connect(filter);
+                          filter.connect(context.destination);
+                          mediaStream.current = filter;
+                          setAppStarted(true);
+                        });
                     }
                   }
                 );
               } else {
-                setAppStarted(true);
+                navigator.mediaDevices
+                  .getUserMedia({ audio: true })
+                  .then((ms) => {
+                    const audioContext = new AudioContext();
+                    const analyser = audioContext.createAnalyser();
+                    const microphone = audioContext.createMediaStreamSource(ms);
+                    const javascriptNode = audioContext.createScriptProcessor(
+                      2048,
+                      1,
+                      1
+                    );
+
+                    analyser.smoothingTimeConstant = 0.8;
+                    analyser.fftSize = 1024;
+
+                    microphone.connect(analyser);
+                    analyser.connect(javascriptNode);
+                    javascriptNode.connect(audioContext.destination);
+                    mediaStream.current = javascriptNode;
+                    analyserRef.current = analyser;
+                    setAppStarted(true);
+                  });
               }
             }}
           >
