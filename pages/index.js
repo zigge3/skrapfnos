@@ -35,6 +35,7 @@ export default function Home() {
                 DeviceOrientationEvent.requestPermission().then(
                   (permissionState) => {
                     if (permissionState === "granted") {
+                      elem.requestFullscreen();
                       setAppStarted(true);
                     }
                   }
